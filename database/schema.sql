@@ -1,0 +1,134 @@
+-- =====================================================================
+-- AI Product Shelf Monitoring System
+-- MySQL Schema Script
+-- =====================================================================
+
+CREATE DATABASE IF NOT EXISTS shelf_monitor
+    CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE shelf_monitor;
+
+-- ---------------------------------------------------------------------
+-- Users (Admin & Staff)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(80) NOT NULL UNIQUE,
+    email VARCHAR(120) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'staff') NOT NULL DEFAULT 'staff',
+    is_active_user BOOLEAN DEFAULT TRUE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    last_login DATETIME NULL
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Products
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(150) NOT NULL,
+    sku VARCHAR(50) NOT NULL UNIQUE,
+    category VARCHAR(100),
+    class_label VARCHAR(100) NOT NULL,   -- must match YOLOv8 trained class name
+    min_stock_threshold INT DEFAULT 5,
+    image_path VARCHAR(255),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Shelves
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS shelves (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    location VARCHAR(150),
+    aisle VARCHAR(50),
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Shelf-Product mapping (planogram: which products belong on which shelf)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS shelf_products (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shelf_id INT NOT NULL,
+    product_id INT NOT NULL,
+    expected_quantity INT DEFAULT 10,
+    FOREIGN KEY (shelf_id) REFERENCES shelves(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Detection Logs (one row per image upload / webcam capture / scan)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS detection_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shelf_id INT NOT NULL,
+    source_image VARCHAR(255) NOT NULL,
+    annotated_image VARCHAR(255),
+    capture_type ENUM('upload', 'webcam') DEFAULT 'upload',
+    total_products_detected INT DEFAULT 0,
+    empty_shelf_percentage FLOAT DEFAULT 0.0,
+    is_empty BOOLEAN DEFAULT FALSE,
+    created_by INT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (shelf_id) REFERENCES shelves(id) ON DELETE CASCADE,
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Detection Items (individual bounding boxes belonging to a log)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS detection_items (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    log_id INT NOT NULL,
+    product_id INT NULL,
+    class_label VARCHAR(100) NOT NULL,
+    confidence FLOAT NOT NULL,
+    x1 INT, y1 INT, x2 INT, y2 INT,
+    FOREIGN KEY (log_id) REFERENCES detection_logs(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- ---------------------------------------------------------------------
+-- Alerts (empty shelf / low stock / misplaced product)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS alerts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    shelf_id INT NOT NULL,
+    product_id INT NULL,
+    alert_type ENUM('empty_shelf', 'low_stock', 'misplaced_product') NOT NULL,
+    message VARCHAR(255) NOT NULL,
+    is_resolved BOOLEAN DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (shelf_id) REFERENCES shelves(id) ON DELETE CASCADE,
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- =====================================================================
+-- Seed Data (for demo / viva purposes)
+-- =====================================================================
+
+-- Default admin user -> username: admin | password: admin123
+-- (This hash is generated by Werkzeug's generate_password_hash; you can
+--  also just run `flask --app run.py create-admin` instead of using this row)
+INSERT INTO users (username, email, password_hash, role) VALUES
+('admin', 'admin@shelfmonitor.local', 'scrypt:32768:8:1$I49XAXWxWFiXSYwQ$fa7206643d9bf7230bccad63476d07882f376a294bb233dc459a5a127f101ad18a5b762923efa925728f530beed1c286fe7e25b0c0d6b3055ada3f3e10e9369c', 'admin');
+
+INSERT INTO shelves (name, location, aisle, description) VALUES
+('Shelf A1', 'Front Section', 'Aisle 1', 'Beverages shelf'),
+('Shelf A2', 'Front Section', 'Aisle 1', 'Snacks shelf'),
+('Shelf B1', 'Back Section', 'Aisle 2', 'Personal care shelf');
+
+INSERT INTO products (name, sku, category, class_label, min_stock_threshold) VALUES
+('Coca-Cola 500ml', 'SKU-001', 'Beverages', 'coca_cola', 5),
+('Lay''s Classic Chips', 'SKU-002', 'Snacks', 'lays_chips', 5),
+('Colgate Toothpaste', 'SKU-003', 'Personal Care', 'colgate_toothpaste', 5);
+
+INSERT INTO shelf_products (shelf_id, product_id, expected_quantity) VALUES
+(1, 1, 20),
+(2, 2, 20),
+(3, 3, 15);

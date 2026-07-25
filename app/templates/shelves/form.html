@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Shelf' if shelf else 'New Shelf' }}{% endblock %}
+{% block content %}
+<h3><i class="fa-solid fa-warehouse"></i> {{ 'Edit Shelf' if shelf else 'New Shelf' }}</h3>
+
+<div class="card shadow-sm" style="max-width: 560px;">
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control"
+                       value="{{ (form_data.name if form_data else shelf.name) or '' }}" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Location</label>
+                    <input type="text" name="location" class="form-control"
+                           value="{{ (form_data.location if form_data else shelf.location) or '' }}">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Aisle</label>
+                    <input type="text" name="aisle" class="form-control"
+                           value="{{ (form_data.aisle if form_data else shelf.aisle) or '' }}">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Description</label>
+                <textarea name="description" class="form-control" rows="3">{{ (form_data.description if form_data else shelf.description) or '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> {{ 'Save Changes' if shelf else 'Create Shelf' }}
+            </button>
+            <a href="{{ url_for('shelves.index') }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}Detect - Webcam{% endblock %}
+{% block content %}
+<h3><i class="fa-solid fa-video"></i> Product Detection (Webcam Capture)</h3>
+<p class="text-muted">Capture a live frame from your webcam and run YOLOv8 detection on it.</p>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <video id="webcam-video" autoplay playsinline class="w-100 rounded border bg-dark" style="max-height:360px;"></video>
+                <canvas id="webcam-canvas" class="d-none"></canvas>
+                <div class="mt-3">
+                    <button id="start-btn" type="button" class="btn btn-outline-primary">
+                        <i class="fa-solid fa-power-off"></i> Start Camera
+                    </button>
+                    <button id="capture-btn" type="button" class="btn btn-primary" disabled>
+                        <i class="fa-solid fa-camera"></i> Capture Frame
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <img id="preview-img" class="w-100 rounded border mb-3 d-none" alt="Captured frame preview">
+                <form method="POST" id="capture-form">
+                    <div class="mb-3">
+                        <label class="form-label">Shelf</label>
+                        <select name="shelf_id" class="form-select" required>
+                            <option value="" disabled selected>Select a shelf...</option>
+                            {% for s in shelves %}
+                            <option value="{{ s.id }}">{{ s.name }} ({{ s.location }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <input type="hidden" name="image_data" id="image-data-input">
+                    <button type="submit" id="submit-btn" class="btn btn-success w-100" disabled>
+                        <i class="fa-solid fa-magnifying-glass"></i> Run Detection on Captured Frame
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{{ url_for('detection.history') }}" class="btn btn-outline-secondary mt-3">
+    <i class="fa-solid fa-clock-rotate-left"></i> View Detection History
+</a>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const video = document.getElementById('webcam-video');
+const canvas = document.getElementById('webcam-canvas');
+const startBtn = document.getElementById('start-btn');
+const captureBtn = document.getElementById('capture-btn');
+const submitBtn = document.getElementById('submit-btn');
+const previewImg = document.getElementById('preview-img');
+const imageDataInput = document.getElementById('image-data-input');
+
+let stream = null;
+
+startBtn.addEventListener('click', async () => {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        captureBtn.disabled = false;
+        startBtn.disabled = true;
+    } catch (err) {
+        alert('Could not access webcam: ' + err.message);
+    }
+});
+
+captureBtn.addEventListener('click', () => {
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+
+    imageDataInput.value = dataUrl;
+    previewImg.src = dataUrl;
+    previewImg.classList.remove('d-none');
+    submitBtn.disabled = false;
+});
+</script>
+{% endblock %}

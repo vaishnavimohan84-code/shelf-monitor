@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Planogram - {{ shelf.name }}{% endblock %}
+{% block content %}
+<h3><i class="fa-solid fa-list-check"></i> Planogram — {{ shelf.name }}</h3>
+<p class="text-muted">Define which products are expected on this shelf and in what quantity. This drives
+    low-stock detection during scans.</p>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header">Expected Products</div>
+            <table class="table table-striped mb-0 bg-white">
+                <thead><tr><th>Product</th><th>Class Label</th><th>Expected Qty</th><th class="text-end">Actions</th></tr></thead>
+                <tbody>
+                {% for e in entries %}
+                    <tr>
+                        <td>{{ e.product.name }}</td>
+                        <td><span class="badge bg-secondary">{{ e.product.class_label }}</span></td>
+                        <td>{{ e.expected_quantity }}</td>
+                        <td class="text-end">
+                            <form method="POST" action="{{ url_for('shelves.planogram_remove', shelf_id=shelf.id, entry_id=e.id) }}"
+                                  onsubmit="return confirm('Remove this product from the planogram?');">
+                                <button class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="4" class="text-center text-muted py-3">No products assigned yet.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header">Add Product to Shelf</div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Product</label>
+                        <select name="product_id" class="form-select" required>
+                            <option value="" disabled selected>Select a product...</option>
+                            {% for p in available_products %}
+                            <option value="{{ p.id }}">{{ p.name }} ({{ p.sku }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Expected Quantity</label>
+                        <input type="number" min="1" name="expected_quantity" class="form-control" value="10">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-plus"></i> Add to Planogram</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a href="{{ url_for('shelves.index') }}" class="btn btn-outline-secondary mt-3"><i class="fa-solid fa-arrow-left"></i> Back to Shelves</a>
+{% endblock %}

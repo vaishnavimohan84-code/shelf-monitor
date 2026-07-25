@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Detect - Upload{% endblock %}
+{% block content %}
+<h3><i class="fa-solid fa-camera"></i> Product Detection (Image Upload)</h3>
+<p class="text-muted">Upload a shelf photo and run YOLOv8 to count products, flag empty shelves, and detect low stock.</p>
+
+<div class="card shadow-sm" style="max-width: 560px;">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Shelf</label>
+                <select name="shelf_id" class="form-select" required>
+                    <option value="" disabled selected>Select a shelf...</option>
+                    {% for s in shelves %}
+                    <option value="{{ s.id }}">{{ s.name }} ({{ s.location }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Shelf Image</label>
+                <input type="file" name="image" accept=".png,.jpg,.jpeg" class="form-control" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">
+                <i class="fa-solid fa-magnifying-glass"></i> Run Detection
+            </button>
+        </form>
+    </div>
+</div>
+
+<a href="{{ url_for('detection.history') }}" class="btn btn-outline-secondary mt-3">
+    <i class="fa-solid fa-clock-rotate-left"></i> View Detection History
+</a>
+{% endblock %}

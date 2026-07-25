@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Detection Result{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h3 class="mb-0"><i class="fa-solid fa-chart-simple"></i> Detection Result — {{ log.shelf.name }}</h3>
+    <span class="badge {{ 'bg-danger' if log.is_empty else 'bg-success' }} fs-6">
+        {{ 'EMPTY / LOW COVERAGE' if log.is_empty else 'STOCKED' }}
+    </span>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header">Annotated Image</div>
+            <div class="card-body text-center">
+                {% if log.annotated_image %}
+                <img src="{{ url_for('static', filename=log.annotated_image) }}" class="img-fluid rounded border">
+                {% else %}
+                <img src="{{ url_for('static', filename=log.source_image) }}" class="img-fluid rounded border">
+                <p class="text-muted mt-2 mb-0"><em>Annotated overlay not available for this scan.</em></p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm mb-3">
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="fs-3 fw-bold">{{ log.total_products_detected }}</div>
+                        <div class="text-muted">Products Detected</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fs-3 fw-bold">{{ log.empty_shelf_percentage }}%</div>
+                        <div class="text-muted">Empty Space</div>
+                    </div>
+                </div>
+                <hr>
+                <div><strong>Capture Type:</strong> {{ log.capture_type }}</div>
+                <div><strong>Scanned:</strong> {{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header">Items Detected</div>
+            <ul class="list-group list-group-flush">
+                {% for item in log.items %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>
+                        <span class="badge bg-secondary">{{ item.class_label }}</span>
+                        {% if item.product %}{{ item.product.name }}{% endif %}
+                    </span>
+                    <span class="text-muted">{{ (item.confidence * 100) | round(1) }}%</span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">No products detected in this scan.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="{{ url_for('detection.upload') }}" class="btn btn-outline-primary"><i class="fa-solid fa-camera"></i> New Upload Scan</a>
+    <a href="{{ url_for('detection.history') }}" class="btn btn-outline-secondary"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+</div>
+{% endblock %}

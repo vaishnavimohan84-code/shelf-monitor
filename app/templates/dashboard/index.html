@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Shelf Monitor{% endblock %}
+{% block content %}
+<h3 class="mb-4"><i class="fa-solid fa-gauge"></i> Dashboard</h3>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary shadow-sm">
+            <div class="card-body">
+                <div class="fs-4 fw-bold">{{ kpis.total_products }}</div>
+                <div>Total Products</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success shadow-sm">
+            <div class="card-body">
+                <div class="fs-4 fw-bold">{{ kpis.total_shelves }}</div>
+                <div>Total Shelves</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info shadow-sm">
+            <div class="card-body">
+                <div class="fs-4 fw-bold">{{ kpis.total_scans }}</div>
+                <div>Scans Performed</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger shadow-sm">
+            <div class="card-body">
+                <div class="fs-4 fw-bold">{{ kpis.open_alerts }}</div>
+                <div>Open Alerts</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
+        <div class="card shadow-sm">
+            <div class="card-header">Scans Over Last 7 Days</div>
+            <div class="card-body">
+                <canvas id="trendChart" height="110"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="card shadow-sm">
+            <div class="card-header">Open Alerts by Type</div>
+            <div class="card-body">
+                <canvas id="alertsChart" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm">
+            <div class="card-header">Most-Scanned Shelves</div>
+            <div class="card-body">
+                <canvas id="topShelvesChart" height="140"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header">Recent Alerts</div>
+            <ul class="list-group list-group-flush">
+                {% for alert in recent_alerts %}
+                <li class="list-group-item">
+                    <span class="badge bg-warning text-dark">{{ alert.alert_type }}</span>
+                    {{ alert.message }}
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">No alerts yet.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header">Recent Scans</div>
+            <ul class="list-group list-group-flush">
+                {% for log in recent_logs %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>Shelf #{{ log.shelf_id }} — {{ log.total_products_detected }} items</span>
+                    <span class="text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                </li>
+                {% else %}
+                <li class="list-group-item text-muted">No scans yet. Try Detect (Upload).</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const trendCtx = document.getElementById('trendChart');
+new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: {{ trend_labels | tojson }},
+        datasets: [{
+            label: 'Scans',
+            data: {{ trend_counts | tojson }},
+            borderColor: '#0d6efd',
+            backgroundColor: 'rgba(13,110,253,0.15)',
+            tension: 0.3,
+            fill: true,
+        }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+});
+
+const alertsCtx = document.getElementById('alertsChart');
+new Chart(alertsCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['Empty Shelf', 'Low Stock', 'Misplaced Product'],
+        datasets: [{
+            data: [
+                {{ alerts_breakdown.empty_shelf }},
+                {{ alerts_breakdown.low_stock }},
+                {{ alerts_breakdown.misplaced_product }}
+            ],
+            backgroundColor: ['#dc3545', '#ffc107', '#6f42c1'],
+        }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+});
+
+const topShelvesCtx = document.getElementById('topShelvesChart');
+new Chart(topShelvesCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ top_shelf_labels | tojson }},
+        datasets: [{
+            label: 'Scans',
+            data: {{ top_shelf_counts | tojson }},
+            backgroundColor: '#198754',
+        }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+});
+</script>
+{% endblock %}

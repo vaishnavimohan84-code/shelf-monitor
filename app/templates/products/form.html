@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Product' if product else 'New Product' }}{% endblock %}
+{% block content %}
+<h3><i class="fa-solid fa-box"></i> {{ 'Edit Product' if product else 'New Product' }}</h3>
+
+<div class="card shadow-sm" style="max-width: 640px;">
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Name</label>
+                <input type="text" name="name" class="form-control"
+                       value="{{ (form_data.name if form_data else product.name) or '' }}" required>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">SKU</label>
+                    <input type="text" name="sku" class="form-control"
+                           value="{{ (form_data.sku if form_data else product.sku) or '' }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Category</label>
+                    <input type="text" name="category" class="form-control" list="category-list"
+                           value="{{ (form_data.category if form_data else product.category) or '' }}">
+                    <datalist id="category-list">
+                        {% for c in categories %}<option value="{{ c }}">{% endfor %}
+                    </datalist>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">
+                    Class Label
+                    <i class="fa-solid fa-circle-info text-muted" title="Must match the YOLOv8 trained class name for this product"></i>
+                </label>
+                <input type="text" name="class_label" class="form-control"
+                       value="{{ (form_data.class_label if form_data else product.class_label) or '' }}" required>
+                <div class="form-text">Must exactly match the class name the YOLOv8 model was trained on.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Minimum Stock Threshold</label>
+                <input type="number" min="0" name="min_stock_threshold" class="form-control"
+                       value="{{ (form_data.min_stock_threshold if form_data else product.min_stock_threshold) or 5 }}">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Product Image</label>
+                <input type="file" name="image" accept=".png,.jpg,.jpeg" class="form-control">
+                {% if product and product.image_path %}
+                <div class="mt-2">
+                    <img src="{{ url_for('static', filename=product.image_path) }}" style="max-height:80px;" class="rounded border">
+                    <div class="form-text">Uploading a new image will replace this one.</div>
+                </div>
+                {% endif %}
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fa-solid fa-floppy-disk"></i> {{ 'Save Changes' if product else 'Create Product' }}
+            </button>
+            <a href="{{ url_for('products.index') }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

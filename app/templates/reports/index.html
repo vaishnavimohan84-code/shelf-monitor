@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h3><i class="fa-solid fa-file-lines"></i> Reports</h3>
+<p class="text-muted">Generate a scan/alert summary report for a date range and export it as PDF, Excel, or CSV.</p>
+
+<div class="card shadow-sm" style="max-width: 640px;">
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('reports.generate') }}">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">Start Date</label>
+                    <input type="date" name="start_date" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">End Date</label>
+                    <input type="date" name="end_date" class="form-control">
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Shelf (optional)</label>
+                <select name="shelf_id" class="form-select">
+                    <option value="">All Shelves</option>
+                    {% for s in shelves %}
+                    <option value="{{ s.id }}">{{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Format</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="format" id="fmt-pdf" value="pdf" checked>
+                    <label class="btn btn-outline-danger" for="fmt-pdf"><i class="fa-solid fa-file-pdf"></i> PDF</label>
+
+                    <input type="radio" class="btn-check" name="format" id="fmt-excel" value="excel">
+                    <label class="btn btn-outline-success" for="fmt-excel"><i class="fa-solid fa-file-excel"></i> Excel</label>
+
+                    <input type="radio" class="btn-check" name="format" id="fmt-csv" value="csv">
+                    <label class="btn btn-outline-secondary" for="fmt-csv"><i class="fa-solid fa-file-csv"></i> CSV</label>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-download"></i> Generate & Download</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
