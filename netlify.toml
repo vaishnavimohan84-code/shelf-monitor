@@ -1,0 +1,8 @@
+[build]
+  publish = "static"
+  command = ""
+
+[dev]
+  # Local dev server settings (optional)
+  # If you use Netlify Dev, uncomment and set the command to run your app locally
+  # command = "python run.py"

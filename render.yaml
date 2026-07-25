@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: shelf-monitor
+    env: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT run:app
+    envVars:
+      - key: SECRET_KEY
+        value: "change-me"
+      - key: DB_USE_SQLITE
+        value: "true"
+    autoDeploy: true
